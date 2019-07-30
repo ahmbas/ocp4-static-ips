@@ -1,0 +1,11 @@
+DEVICE=ens192
+BOOTPROTO=none
+ONBOOT=yes
+NETMASK={{NETMASK}}
+IPADDR={{IP}}
+GATEWAY={{GATEWAY}}
+PEERDNS=no
+{%   for ns in ext_dns %}
+DNS{{ loop.index }}={{ ns }}
+{%   endfor %}
+IPV6INIT=no

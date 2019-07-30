@@ -1,0 +1,87 @@
+- hosts: localhost
+  vars:
+    base_dir: "/home/ahmed/webapps/ocp41"
+  tasks:
+  - name: create ifcfg for masters
+    vars:
+      NETMASK: "{{masters_nm}}"
+      IP: "{{ hostvars[item]['ip'] }}"
+      GATEWAY: "{{masters_gw}}"
+    template:
+      src: templates/ifcfg-ens192.j2
+      dest: "{{base_dir}}/{{item}}-ifcfg-ens192"
+    with_items:
+      - "{{ groups['masters'] | sort }}"
+
+  - name: create ifcfg for workers
+    vars:
+      NETMASK: "{{workers_nm}}"
+      IP: "{{ hostvars[item]['ip'] }}"
+      GATEWAY: "{{workers_gw}}"
+    template:
+      src: templates/ifcfg-ens192.j2
+      dest: "{{base_dir}}/{{item}}-ifcfg-ens192"
+    with_items:
+      - "{{ groups['workers'] | sort }}"
+
+  - name: create base64 for masters ifcfg
+    shell:
+      cmd: |
+        base64 -w0 {{base_dir}}/{{item}}-ifcfg-ens192 > {{base_dir}}/{{item}}-ifcfg-ens192.64
+    with_items:
+      - "{{ groups['masters'] | sort }}"
+
+  - name: create base64 for workers ifcfg
+    shell:
+      cmd: |
+        base64 -w0 {{base_dir}}/{{item}}-ifcfg-ens192 > {{base_dir}}/{{item}}-ifcfg-ens192.64
+    with_items:
+      - "{{ groups['workers'] | sort }}"
+
+  - name: create masters bootstrap append
+    vars:
+      HOSTNAME: "{{ hostvars[item]['fqdn'] }}"
+      ENS192_B64: "{{ lookup('file', '{{base_dir}}/{{item}}-ifcfg-ens192.64') }}"
+    template:
+      src: templates/machine-append-bootstrap.json.j2
+      dest: "{{base_dir}}/{{item}}-bootstrap-append"
+    with_items:
+      - "{{ groups['masters'] | sort }}"
+
+  - name: create workers bootstrap append
+    vars:
+      HOSTNAME: "{{ hostvars[item]['fqdn'] }}"
+      ENS192_B64: "{{ lookup('file', '{{base_dir}}/{{item}}-ifcfg-ens192.64') }}"
+    template:
+      src: templates/machine-append-bootstrap.json.j2
+      dest: "{{base_dir}}/{{item}}-bootstrap-append"
+    with_items:
+      - "{{ groups['workers'] | sort }}"
+
+  - name: create copys of masters ign
+    shell:
+      cmd: |
+        cp {{base_dir}}/master.ign {{base_dir}}/{{item}}.ign.orig
+    with_items:
+      - "{{ groups['masters'] | sort }}"
+
+  - name: create copys of workers ign
+    shell:
+      cmd: |
+        cp {{base_dir}}/worker.ign {{base_dir}}/{{item}}.ign.orig
+    with_items:
+      - "{{ groups['workers'] | sort }}"
+
+  - name: create the final masters ign
+    shell:
+      cmd: |
+        jq '.storage.files = inputs' {{base_dir}}/{{item}}.ign.orig {{base_dir}}/{{item}}-bootstrap-append > {{base_dir}}/{{item}}.ign
+    with_items:
+      - "{{ groups['masters'] | sort }}"
+
+  - name: create the final workers ign
+    shell:
+      cmd: |
+        jq '.storage.files = inputs' {{base_dir}}/{{item}}.ign.orig {{base_dir}}/{{item}}-bootstrap-append > {{base_dir}}/{{item}}.ign
+    with_items:
+      - "{{ groups['workers'] | sort }}"

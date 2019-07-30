@@ -1,0 +1,49 @@
+[{
+  "append" : false,
+  "mode" : 420,
+  "filesystem" : "root",
+  "path" : "/etc/NetworkManager/conf.d/hostname-mode.conf",
+  "contents" : {
+    "source" : "data:text/plain;charset=utf-8;base64,W21haW5dCmhvc3RuYW1lLW1vZGU9bm9uZQo=",
+    "verification" : {}
+  },
+  "user" : {
+    "name" : "root"
+  },
+  "group": {
+    "name": "root"
+  }
+},
+{
+  "append" : false,
+  "mode" : 420,
+  "filesystem" : "root",
+  "path" : "/etc/hostname",
+  "contents" : {
+    "source" : "data:,{{HOSTNAME}}",
+    "verification" : {}
+  },
+  "user" : {
+    "name" : "root"
+  },
+  "group": {
+    "name": "root"
+  }
+},
+{
+  "append" : false,
+  "mode" : 420,
+  "filesystem" : "root",
+  "path" : "/etc/sysconfig/network-scripts/ifcfg-ens192",
+  "contents" : {
+    "source" : "data:text/plain;charset=utf-8;base64,{{ENS192_B64}}",
+    "verification" : {}
+  },
+  "user" : {
+    "name" : "root"
+  },
+  "group": {
+    "name": "root"
+  }
+}
+]
